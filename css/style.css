@@ -1,0 +1,54 @@
+html,body{
+    font-family: Arial, sans-serif;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+#map{
+    height: 100%;
+    max-width: 100%;
+}
+
+.searchbar{
+    position: absolute;
+    top: 25px;
+    left: 10px;
+    border: 1px solid black;
+    padding: 15px;
+}
+
+
+.displayDiv{
+    position: absolute;
+    top: 130px;
+    left: 10px;
+    border: 1px solid black;
+    padding: 10px;
+    width: 35%;
+
+}
+
+.results{
+    max-height: 500px;
+    overflow: scroll;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.results li:hover{
+    cursor: pointer;
+    background-color: yellow;
+}
+
+.filter_form{
+    margin-top: 10px;
+}
+
+@media screen and (max-width:450px){
+    .searchbar{
+        width: 70%;
+        margin: 0;
+    }
+}
