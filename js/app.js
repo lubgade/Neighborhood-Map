@@ -1,10 +1,3 @@
-/*$(function(){
- getYelpReviews();
- });*/
-
-
-
-
 
 function viewModel(){
     var self = this;
@@ -12,7 +5,10 @@ function viewModel(){
     var place = '';
     var newLocation;
     var filterLoc;
+    var place_id;
     var largeInfowindow = new google.maps.InfoWindow({maxwidth: 300});
+    var cors_anywhere_url = 'https://cors-anywhere.herokuapp.com/';
+
 
       // Create a new blank array for all the listing markers.
     var markers = [];
@@ -23,10 +19,14 @@ function viewModel(){
     this.restaurantList = ko.observableArray([]);
 
     var restaurant = function(data){
-        this.name = ko.observable(data.name);
-        this.address = ko.observable(data.formatted_address);
+        this.name = data.name;
+        this.address = data.location.address + "<br>" + data.location.city +
+                       " " + data.location.zipcode;
+        this.rating = data.user_rating.aggregate_rating;
+        this.menuUrl = data.menu_url;
+        this.lat = parseFloat(data.location.latitude);
+        this.lng = parseFloat(data.location.longitude);
     }
-
 
 
     this.initialize = function(){
@@ -45,19 +45,11 @@ function viewModel(){
         console.log(input);
 
         var options = {
-            regions: ['state','administrative_area_level_1']};
-
-        newLocation = new google.maps.places.Autocomplete(input,
-        options);
-        console.log(newLocation);
-
-        var input = document.getElementById('filter_text');
-        var bounds = new google.maps.LatLngBounds();
-        var options = {
-            bounds: bounds,
             types: ['(cities)']
-        }
-        filterLoc = new google.maps.places.Autocomplete(input);
+            };
+
+        newLocation = new google.maps.places.Autocomplete(input,options);
+        console.log(newLocation);
 
         newLocation.addListener('place_changed', function(){
                 place = newLocation.getPlace();
@@ -71,61 +63,69 @@ function viewModel(){
 
                 });
 
-        }; //end of initMap
+        }; //end of initialize
 
         function hideMarkers() {
             for (var i = 0; i < markers.length; i++) {
-                markers[i].setMap(null);
+                markers[i].marker.setMap(null);
         }
       }
-
-
 
 
     this.processSearchLocation = function(formElement){
         console.log(formElement["searchText"].value);
         var geocoder = new google.maps.Geocoder();
-
-        if(formElement["searchText"].value == ''){
+        var place_name = formElement["searchText"].value;
+        console.log(place_name);
+        if(place_name == ''){
             window.alert('Please enter a state');
         }
         else{
 
-            //filterLoc.addListener('')
             var state = place.formatted_address;
             console.log(state);
             geocoder.geocode(
             {
                address: state
             }, function(results, status){
-                console.log(status);
                 console.log(results);
                 if(status == google.maps.GeocoderStatus.OK){
                     map.setCenter(results[0].geometry.location);
                     console.log(results[0].geometry.location);
-                    map.setZoom(8);
+                    map.setZoom(10);
                     var newLat = results[0].geometry.location.lat();
                     var newLng = results[0].geometry.location.lng();
-                    console.log(newLat);
-                    console.log(newLng);
-                    var position = {lat:newLat,lng:newLng};
-                    searchRestaurants(state, position);
-                    //getYelpReviews(state,newLat,newLng);
-                    var bounds = new google.maps.LatLngBounds();
-                    bounds.extend(position);
-                    //filterLoc.setOptions({strictBounds: true});
-                    filterLoc.setBounds(bounds);
+
+                    getZomatoCityId(place_name, newLat, newLng);
                 }
                 else{
                     window.alert('We could not find the place');
                 }
             }
-            )
-
-
+            );
         }
 
     }; //end of processSearchLocation
+
+
+    function getZomatoCityId(place_name, newLat, newLng){
+        var zomatoUrl = "https://developers.zomato.com/api/v2.1/" +
+                        "cities?q=";
+                    $.ajax({
+                        type: 'GET',
+                        url: cors_anywhere_url + zomatoUrl + place_name +
+                        "&lat=" + newLat + "&lon=" + newLng + "&count=1",
+                        headers: {'user_key': '26ce1af09de13709ce7601f27ae5e14d'},
+
+                                }).done(function(response){
+                                    //console.log(response);
+                            place_id = response.location_suggestions[0].id;
+                            //console.log(place_id);
+                            getZomatoRestaurants(place_id);
+                                }).fail(function(){
+                                    console.log("error getting place id");
+                    });
+    }
 
 
     this.filterResults = function(formElement){
@@ -133,120 +133,53 @@ function viewModel(){
             window.alert('please enter a city');
         }
         else{
-            var state = '';
-            var position = filterLoc.getBounds();
-            //console.log(lat);
-            //console.log(lat.b);
-            //console.log(lat.f.value);
-            searchRestaurants(state, position);
-        }
+
+                    }
     }
 
 
 
     this.goToMarker = function(clickedRestaurant){
-        console.log(clickedRestaurant.name());
-        var name = clickedRestaurant.name();
+        console.log(clickedRestaurant);
+        var name = clickedRestaurant.name;
         console.log(name);
-        for(var key in markers){
-
-            console.log(markers[key].title);
-            if(name == markers[key].title){
+        for(var i=0;i<markers.length;i++){
+            console.log(markers[i].marker.title);
+            if(name == markers[i].marker.title){
                 console.log('if true');
-                map.panTo(markers[key].position);
+                map.panTo(markers[i].marker.position);
                 map.setZoom(14);
-                console.log(markers[key]);
-                populateInfoWindow(markers[key],largeInfowindow);
+                populateInfoWindow(markers[i].marker,largeInfowindow,
+                                   markers[i].content);
                 break;
             }
         }
-
-
     }
 
 
-    function searchRestaurants(state,position){
-        console.log('searching restaurants');
-        //var position = {lat:newLat,lng:newLng};
-        console.log(position);
-        var bounds = new google.maps.LatLngBounds();
-        var request = {
-            bounds: bounds.extend(position),
-            query: ['indian cuisine','indian']
-        }
-
-        var service = new google.maps.places.PlacesService(map);
-        console.log(service);
-        service.textSearch(request, function(results,status){
-            if(status == google.maps.places.PlacesServiceStatus.OK){
-                for(var i=0;i<results.length;i++){
-                    var point = results[i];
-                    //console.log(point);
-                    //console.log('going to create a marker');
-                    //var restaurant = {name:point.name,address:point
-                    //.formatted_address};
-                    //console.log(restaurant);
-                    if(state != ''){
-                    self.restaurantList.push(new restaurant(point));
-                    }
-                    createMarker(point);
+    function showRestaurants(data){
+        console.log(data);
+        for(var i=0;i<data.results_shown;i++){
+            var r = data.restaurants[i].restaurant;
+            self.restaurantList.push(new restaurant(r));
+            createMarker(r);
                 }
-            }
-        });
-        getYelpReviews(position.lat,position.lng)
 
-    } //end of searchRestaurants
+    } //end of showRestaurants
 
 
 
-function getYelpReviews(lat,lng){
-        var cors_anywhere_url = 'https://cors-anywhere.herokuapp.com/';
-
-        /*var yelpRequestUrl = "https://api.yelp.com/oauth2/token";
-        var app_id = 'CWLGp_F0hob5KO8sy-ZNww';
-        var app_secret = '5e5iLrJNv36MR5ks7FAlmH2PVxgrM14dijyXzSyDmcw9HrmAGpOOnPzqK6podLWA';
-
-        $.ajax({
-            type: "POST",
-            url: cors_anywhere_url + "https://api.yelp.com/oauth2/token",
-            data: {
-                grant_type: 'client_credentials',
-                client_id: 'CWLGp_F0hob5KO8sy-ZNww',
-                client_secret: '5e5iLrJNv36MR5ks7FAlmH2PVxgrM14dijyXzSyDmcw9HrmAGpOOnPzqK6podLWA'
-            },
-            }).done(function(response){
-                console.log(response);
-            }).fail(function(error){
-                console.log('sorry error');
-            });*/
-
-            /*contentType: 'application/x-www-form-urlencoded',
-            dataType: 'jsonp',
-            success: function(result){
-                console.log('in success');
-                console.log(result);
-            },
-            error: function(){
-                window.alert('sorry something went wrong');
-            }
-
-        });*/
-        console.log(lat);
-        console.log(lng);
-        //var yelpUrl = "https://api.yelp.com/v3/businesses/search";
+function getZomatoRestaurants(place_id){
         var zomatoUrl = "https://developers.zomato.com/api/v2.1/" +
-                        "search?entity_id=280&entity_type=city&cuisines=148"
+                        "search?entity_id=" +
+                        place_id + "&entity_type=city&cuisines=148"
         $.ajax({
             type: 'GET',
             url: cors_anywhere_url + zomatoUrl,
             headers: {'user_key': '26ce1af09de13709ce7601f27ae5e14d'},
-            /*params: {
-                entity_id: 280,
-                entity_type: 'city',
-                cuisines: 148,  //zomato id for Indian cuisine
-            },*/
             }).done(function(response){
-                console.log(response);
+                //console.log(response);
+                showRestaurants(response);
             }).fail(function(){
                 console.log("error getting restaurants");
 
@@ -256,32 +189,46 @@ function getYelpReviews(lat,lng){
 
 
 
-    function createMarker(point){
+    function createMarker(r){
         self.showDiv(true);
         //console.log('creating marker');
+        var position, lat, lng;
+        lat = parseFloat(r.location.latitude);
+        //console.log(lat);
+        lng = parseFloat(r.location.longitude);
+        //console.log(lng);
+        position = {lat:lat,lng:lng};
+        //console.log(position);
         var marker = new google.maps.Marker({
             map: map,
-            position: point.geometry.location,
-            title: point.name,
+            position: position,
+            title: r.name,
             animation: google.maps.Animation.DROP,
           });
-          //console.log('created marker');
-          //console.log(marker);
+
+        var contentString = '<div id="infoWindow">' +
+                            '<h2>' + r.name + '</h2>' +
+                            '<p>' + r.location.address + '</p>' +
+                            '<p class="rating">' +
+                            r.user_rating.aggregate_rating + '</p>' +
+                            '<a href=' + r.menu_url + '>' + 'Menu Url</a>'
+
         // Push the marker to our array of markers.
-          markers.push(marker);
+          markers.push({marker:marker, content: contentString});
           // Create an onclick event to open an infowindow at each marker.
           marker.addListener('click', function() {
-            populateInfoWindow(this, largeInfowindow);
+            populateInfoWindow(this, largeInfowindow, contentString);
           });
-
-
     } // end of createMarker
 
-    function populateInfoWindow(marker, infowindow) {
+
+    function populateInfoWindow(marker, infowindow, contentString) {
         // Check to make sure the infowindow is not already opened on this marker.
+        console.log(marker);
+        console.log(contentString);
         if (infowindow.marker != marker) {
           infowindow.marker = marker;
-          infowindow.setContent('<div>' + marker.title + '</div>');
+          infowindow.setContent(contentString);
           infowindow.open(map, marker);
           // Make sure the marker property is cleared if the infowindow is closed.
           infowindow.addListener('closeclick',function(){
@@ -296,10 +243,6 @@ if(typeof google === 'object'){
 else{
     this.handleError('Cannot load the map...Please reload the page');
 }
-
-
-
-
 
 }
 
