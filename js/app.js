@@ -7,6 +7,7 @@ function viewModel(){
     var place = '';
     var newLocation;
     var place_id;
+    var total;
     var largeInfowindow = new google.maps.InfoWindow({maxwidth: 300});
     var cors_anywhere_url = 'https://cors-anywhere.herokuapp.com/';
 
@@ -16,9 +17,11 @@ function viewModel(){
     this.showDiv = ko.observable(false);
     this.showFilterDiv = ko.observable(false);
     this.searchLocation = ko.observable();
+    this.status = ko.observable('');
     this.filterLocation = ko.observable();
     this.restaurantList = ko.observableArray([]);
     this.filteredList = ko.observableArray([]);
+    this.results_found = ko.observable();
 
     var restaurant = function(data){
         this.name = data.name;
@@ -38,6 +41,10 @@ function viewModel(){
         map = new google.maps.Map(document.getElementById('map'), {
         center: {lat: initialLat, lng: initialLng},
         zoom: 4,
+        zoomControlOptions: {
+            position: google.maps.ControlPosition.RIGHT_CENTER,
+            style: google.maps.ZoomControlStyle.SMALL
+        },
         scrollwheel: false,
         zoomControl: true
         });
@@ -73,6 +80,8 @@ function viewModel(){
 
     this.processSearchLocation = function(formElement){
         //console.log(formElement["searchText"].value);
+        self.status('Loading....')
+        self.showDiv(true);
         var geocoder = new google.maps.Geocoder();
         var place_name = formElement["searchText"].value;
         //console.log(place_name);
@@ -91,10 +100,9 @@ function viewModel(){
                 if(status == google.maps.GeocoderStatus.OK){
                     map.setCenter(results[0].geometry.location);
                     console.log(results[0].geometry.location);
-                    map.setZoom(10);
+                    map.setZoom(11);
                     var newLat = results[0].geometry.location.lat();
                     var newLng = results[0].geometry.location.lng();
-
                     getZomatoCityId(place_name, newLat, newLng);
                 }
                 else{
@@ -127,7 +135,7 @@ function viewModel(){
 
 
     this.filterResults = function(formElement){
-        self.showFilterDiv(true);
+        self.status('filtered result');
         showMarker(self.filterLocation());
 
     }
@@ -135,6 +143,7 @@ function viewModel(){
 
     function showMarker(name){
         console.log(name);
+        if(name){
         for(var i=0;i<markers.length;i++){
             if(name == markers[i].marker.title){
                 map.panTo(markers[i].marker.position);
@@ -143,6 +152,10 @@ function viewModel(){
                                    markers[i].content);
                 break;
             }
+        }
+        }
+        else{
+            window.alert('please select a name');
         }
     }
 
@@ -164,6 +177,14 @@ function viewModel(){
 
     function showRestaurants(data){
         console.log(data);
+        total = data.results_found;
+                if(total > 100){
+                    total = 100;
+                }
+                self.status(total + ' results found...');
+                if(total == 0){
+                    self.status('Sorry no results');
+                }
         for(var i=0;i<data.results_shown;i++){
             var r = data.restaurants[i].restaurant;
             self.restaurantList.push(new restaurant(r));
@@ -183,7 +204,6 @@ function viewModel(){
 
                 $('#filter_text').autocomplete({
                 source: list,
-
                 select: function(event,ui){
                     var text = ui.item.label;
                     console.log(text);
@@ -200,7 +220,7 @@ function viewModel(){
                             self.filteredList.removeAll();
                             self.filteredList.push({name:list[i].label,
                             address:list[i].address});
-                            //break;
+                            break;
                         }
                     }
                     console.log(self.filteredList());
@@ -218,6 +238,7 @@ function viewModel(){
 
 
     this.clearFilter = function(){
+        self.status(total + ' results found');
         largeInfowindow.close();
         var center = map.getCenter();
         var lat = self.searchLocation().geometry.location.lat();
@@ -227,15 +248,34 @@ function viewModel(){
         var cityCenter = new google.maps.LatLng(lat, lng);
         console.log(cityCenter);
         self.filterLocation('');
-        console.log(self.restaurantList());
+        //console.log(self.restaurantList());
         self.filteredList(self.restaurantList.slice(0));
-        console.log(self.filteredList());
+        //console.log(self.filteredList());
         map.panTo(cityCenter);
         map.setZoom(10);
         for(var i=0;i<markers.length;i++){
             markers[i].marker.setMap(map);
         }
     }
+
+    this.pageList = ko.computed(function(){
+        var count = 0;
+        for(var i=20;i<self.results_found();i=i+20){
+            if(i%2 == 0 && i<=100){
+                count++;
+            }
+            else{
+                break;
+            }
+        }
+        console.log(count);
+        if(count < 5){
+            count++;
+        }
+        console.log(count);
+        return Array.apply(null, {length:count}).map(Number.call, Number);
+
+    },this);
 
 
 function getZomatoRestaurants(place_id){
@@ -247,14 +287,53 @@ function getZomatoRestaurants(place_id){
             url: cors_anywhere_url + zomatoUrl,
             headers: {'user_key': '26ce1af09de13709ce7601f27ae5e14d'},
             }).done(function(response){
-                //console.log(response);
+                console.log(response);
+                console.log(response.results_found);
+                self.results_found(response.results_found);
+                console.log(self.results_found());
+                self.status('Loading...');
                 showRestaurants(response);
                 filterLoc();
+
             }).fail(function(){
                 console.log("error getting restaurants");
 
         });
-    } //end of getYelpReviews
+    } //end of getZomatoReviews
+
+
+    this.goToPage = function(page){
+        console.log(self.pageList());
+        console.log(self.pageList()[page]);
+        self.restaurantList.removeAll();
+        hideMarkers();
+        var start = page * 20;
+        getAllRestaurants(start);
+
+    }
+
+
+    function getAllRestaurants(start){
+        var zomatoUrl = "https://developers.zomato.com/api/v2.1/" +
+                        "search?entity_id=" +
+                        place_id + "&entity_type=city&start=" +
+                        start + "&cuisines=148"
+        $.ajax({
+            type: 'GET',
+            url: cors_anywhere_url + zomatoUrl,
+            headers: {'user_key': '26ce1af09de13709ce7601f27ae5e14d'},
+            }).done(function(response){
+                console.log(response);
+                console.log(response.results_start);
+
+                showRestaurants(response);
+                filterLoc();
+
+            }).fail(function(){
+                console.log("error getting restaurants");
+
+        });
+    }
 
 
     function createMarker(r){
@@ -294,7 +373,7 @@ function getZomatoRestaurants(place_id){
     function populateInfoWindow(marker, infowindow, contentString) {
         // Check to make sure the infowindow is not already opened on this marker.
         console.log(marker);
-        console.log(contentString);
+        //console.log(contentString);
         if (infowindow.marker != marker) {
           infowindow.marker = marker;
           infowindow.setContent(contentString);
