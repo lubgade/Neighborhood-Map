@@ -27,6 +27,10 @@
     </form>
 </div>
 <div class="displayDiv" data-bind="visible: showDiv">
+    <div>
+        <h3 class="status" data-bind="text: status"></h3>
+        <hr>
+    </div>
     <ul class="results" data-bind="foreach: filteredList">
         <li data-bind="click: $parent.goToMarker">
             <h4 data-bind="text: name"></h4>
@@ -34,6 +38,15 @@
         </li>
         <hr>
     </ul>
+    <div class="pagination"
+         data-bind="visible: filteredList().length>2">
+        <ul class="page" data-bind="foreach: pageList">
+            <li>
+                <a href="#"
+                   data-bind="text: $data+1, click: $parent.goToPage"></a>
+            </li>
+        </ul>
+    </div>
 </div>
 
 
