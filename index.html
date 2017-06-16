@@ -11,6 +11,12 @@
 </head>
 <body>
 <div id="map"></div>
+<a id="menu" class="header__menu">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M2 6h20v3H2zm0 5h20v3H2zm0 5h20v3H2z"/>
+    </svg>
+  </a>
+
 <div class="searchbar">
     <form data-bind="submit: processSearchLocation">
         <input type="text" id="input_text" data-bind="searchLocation"
@@ -26,13 +32,17 @@
             filter</p>
     </form>
 </div>
+
+
+
+<nav id="drawer" class="nav">
 <div class="displayDiv" data-bind="visible: showDiv">
     <div>
         <h3 class="status" data-bind="text: status"></h3>
         <hr>
     </div>
-    <ul class="results" data-bind="foreach: filteredList">
-        <li data-bind="click: $parent.goToMarker">
+    <ul class="results nav__list" data-bind="foreach: filteredList">
+        <li data-bind="click: $parent.goToMarker" class="nav__item">
             <h4 data-bind="text: name"></h4>
             <p data-bind="text: address"></p>
         </li>
@@ -48,6 +58,8 @@
         </ul>
     </div>
 </div>
+</nav>
+
 
 
 <script src="https://maps.googleapis.com/maps/api/js?libraries=geometry,places&key=AIzaSyDExjJZVNf-xT7k9j3K3RerY0dwfkpJ7zA&v=3">
