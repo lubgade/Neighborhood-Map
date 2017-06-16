@@ -75,6 +75,13 @@ function viewModel(){
                 self.filteredList.removeAll();
                 });
 
+        var menu = document.querySelector('#menu');
+        var drawer = document.querySelector('.nav');
+        menu.addEventListener('click',function(e){
+        drawer.classList.toggle('open');
+        e.stopPropagation();
+        });
+
         }; //end of initialize
 
 
@@ -150,6 +157,8 @@ function viewModel(){
                 map.setZoom(14);
                 populateInfoWindow(markers[i].marker,largeInfowindow,
                                    markers[i].content);
+                markers[i].marker.setAnimation(null);
+
                 break;
             }
         }
@@ -163,6 +172,12 @@ function viewModel(){
     this.goToMarker = function(clickedRestaurant){
         //console.log(clickedRestaurant);
         var name = clickedRestaurant.name;
+        for(var i=0;i<markers.length;i++){
+            if(name == markers[i].marker.title){
+                markers[i].marker.setAnimation(google.maps.Animation.BOUNCE);
+            }
+        }
+
         //console.log(name);
         showMarker(name);
     }
