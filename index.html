@@ -19,12 +19,14 @@
 
 <div class="searchbar">
     <form data-bind="submit: processSearchLocation">
-        <input type="text" id="input_text" data-bind="searchLocation"
-               name="searchText" placeholder="Enter a state">
+        <input type="text" id="input_text"
+               data-bind="searchLocation, selectOnFocus:true"
+               name="searchText" placeholder="Select a city">
         <input type="submit" value="Go" id="submit">
     </form>
     <form data-bind="submit: filterResults" class="filter_form">
-        <input type="text" id="filter_text" data-bind="value: filterLocation"
+        <input type="text" id="filter_text"
+               data-bind="value: filterLocation, selectOnFocus:true"
                name="filterText" placeholder="filter by name">
         <input type="submit" value="filter" id="filter">
         <p class="clear_results"
@@ -42,9 +44,10 @@
         <hr>
     </div>
     <ul class="results nav__list" data-bind="foreach: filteredList">
-        <li data-bind="click: $parent.goToMarker" class="nav__item">
+        <li data-bind="click: $parent.goToMarker"
+            class="nav__item">
             <h4 data-bind="text: name"></h4>
-            <p data-bind="text: address"></p>
+            <p data-bind="text: address" class="address"></p>
         </li>
         <hr>
     </ul>
@@ -52,7 +55,7 @@
          data-bind="visible: filteredList().length>2">
         <ul class="page" data-bind="foreach: pageList">
             <li>
-                <a href="#"
+                <a href="#" class="page-link"
                    data-bind="text: $data+1, click: $parent.goToPage"></a>
             </li>
         </ul>
