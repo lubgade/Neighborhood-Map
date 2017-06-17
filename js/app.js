@@ -15,7 +15,7 @@ function viewModel(){
       // Create a new blank array for all the listing markers.
     var markers = [];
     this.showDiv = ko.observable(false);
-    this.showFilterDiv = ko.observable(false);
+    this.isSelected = ko.observable(false);
     this.searchLocation = ko.observable();
     this.status = ko.observable('');
     this.filterLocation = ko.observable();
@@ -27,6 +27,7 @@ function viewModel(){
         this.name = data.name;
         this.address = data.location.address;
         this.rating = data.user_rating.aggregate_rating;
+        this.averageCost = data.average_cost_for_two;
         this.menuUrl = data.menu_url;
         this.lat = parseFloat(data.location.latitude);
         this.lng = parseFloat(data.location.longitude);
@@ -118,7 +119,6 @@ function viewModel(){
             }
             );
         }
-
     }; //end of processSearchLocation
 
 
@@ -150,18 +150,19 @@ function viewModel(){
 
     function showMarker(name){
         console.log(name);
+        console.log(self.filterLocation());
         if(name){
-        for(var i=0;i<markers.length;i++){
-            if(name == markers[i].marker.title){
-                map.panTo(markers[i].marker.position);
-                map.setZoom(14);
-                populateInfoWindow(markers[i].marker,largeInfowindow,
-                                   markers[i].content);
-                markers[i].marker.setAnimation(null);
-
-                break;
+            console.log('true');
+            for(var i=0;i<markers.length;i++){
+                if(name == markers[i].marker.title){
+                    map.panTo(markers[i].marker.position);
+                    map.setZoom(15);
+                    populateInfoWindow(markers[i].marker,largeInfowindow,
+                                       markers[i].content);
+                    markers[i].marker.setAnimation(google.maps.Animation.BOUNCE);
+                    break;
+                }
             }
-        }
         }
         else{
             window.alert('please select a name');
@@ -172,14 +173,10 @@ function viewModel(){
     this.goToMarker = function(clickedRestaurant){
         //console.log(clickedRestaurant);
         var name = clickedRestaurant.name;
-        for(var i=0;i<markers.length;i++){
-            if(name == markers[i].marker.title){
-                markers[i].marker.setAnimation(google.maps.Animation.BOUNCE);
-            }
-        }
-
-        //console.log(name);
+        console.log(name);
         showMarker(name);
+
+
     }
 
 
@@ -212,49 +209,45 @@ function viewModel(){
 
     function filterLoc(){
         var list = [];
-                for(var i=0;i<self.restaurantList().length;i++){
-                    list.push({label:self.restaurantList()[i].name,
-                               address:self.restaurantList()[i].address,});
-                }
+        for(var i=0;i<self.restaurantList().length;i++){
+            list.push({label:self.restaurantList()[i].name,
+                       address:self.restaurantList()[i].address,});
+        }
 
-                $('#filter_text').autocomplete({
-                source: list,
-                select: function(event,ui){
-                    var text = ui.item.label;
-                    console.log(text);
-                    self.filterLocation(text);
-
-                },
-                change: function(event, ui){
-                    if(ui.item != null){
-                    var text = ui.item.value;
-                    console.log(text);
-                    for(var i=0;i<list.length;i++){
-                        console.log(list[i].label);
-                        if(text == list[i].label){
-                            self.filteredList.removeAll();
-                            self.filteredList.push({name:list[i].label,
-                            address:list[i].address});
-                            break;
+        $('#filter_text').autocomplete({
+            source: list,
+            select: function(event,ui){
+                        var text = ui.item.label;
+                        console.log(text);
+                        self.filterLocation(text);
+            },
+            change: function(event, ui){
+                        if(ui.item != null){
+                            var text = ui.item.value;
+                            console.log(text);
+                            for(var i=0;i<list.length;i++){
+                                console.log(list[i].label);
+                                if(text == list[i].label){
+                                    self.filteredList.removeAll();
+                                    self.filteredList.push({name:list[i].label,
+                                    address:list[i].address});
+                                    break;
+                                }
+                            }
+                            //console.log(self.filteredList());
                         }
-                    }
-                    console.log(self.filteredList());
-
-                    }
-                    else{
+                        else{
                         window.alert('please select a name');
-                    }
+                        }
                     //self.showDiv(true);
 
-                }
-                });
+            }
+        });
 
     }
 
 
-    this.clearFilter = function(){
-        self.status(total + ' results found');
-        largeInfowindow.close();
+    function centerMap(){
         var center = map.getCenter();
         var lat = self.searchLocation().geometry.location.lat();
         console.log(lat);
@@ -262,16 +255,26 @@ function viewModel(){
         console.log(lng);
         var cityCenter = new google.maps.LatLng(lat, lng);
         console.log(cityCenter);
+        if(center != cityCenter){
+            map.panTo(cityCenter);
+            map.setZoom(10);
+        }
+    }
+
+
+    this.clearFilter = function(){
+        self.status(total + ' results found');
+        largeInfowindow.close();
+        centerMap();
         self.filterLocation('');
         //console.log(self.restaurantList());
         self.filteredList(self.restaurantList.slice(0));
         //console.log(self.filteredList());
-        map.panTo(cityCenter);
-        map.setZoom(10);
         for(var i=0;i<markers.length;i++){
             markers[i].marker.setMap(map);
         }
     }
+
 
     this.pageList = ko.computed(function(){
         var count = 0;
@@ -322,6 +325,7 @@ function getZomatoRestaurants(place_id){
         console.log(self.pageList()[page]);
         self.restaurantList.removeAll();
         hideMarkers();
+        map.setZoom(11);
         var start = page * 20;
         getAllRestaurants(start);
 
@@ -359,7 +363,7 @@ function getZomatoRestaurants(place_id){
         //console.log(lat);
         lng = parseFloat(r.location.longitude);
         //console.log(lng);
-        position = {lat:lat,lng:lng};
+        position = new google.maps.LatLng(lat, lng);
         //console.log(position);
         var marker = new google.maps.Marker({
             map: map,
@@ -372,6 +376,8 @@ function getZomatoRestaurants(place_id){
                             '<img src=' + r.thumb + ' alt="image">' +
                             '<h2>' + r.name + '</h2>' +
                             '<p>' + r.location.address + '</p>' +
+                            '<p>Average cost for two: $' +
+                            r.average_cost_for_two + '</p>' +
                             '<p class="rating">Rating: ' +
                             r.user_rating.aggregate_rating + '</p>' +
                             '<a href=' + r.menu_url + '>' + 'Menu Url</a>'
@@ -386,21 +392,37 @@ function getZomatoRestaurants(place_id){
 
 
     function populateInfoWindow(marker, infowindow, contentString) {
-        // Check to make sure the infowindow is not already opened on this marker.
         console.log(marker);
         //console.log(contentString);
-        if (infowindow.marker != marker) {
-          infowindow.marker = marker;
-          infowindow.setContent(contentString);
-          infowindow.open(map, marker);
-          // Make sure the marker property is cleared if the infowindow is closed.
-          infowindow.addListener('closeclick',function(){
+        infowindow.marker = marker;
+        infowindow.setContent(contentString);
+        infowindow.open(map, marker);
+        map.panBy(10,-120);
+        // Make sure the marker property is cleared if the infowindow is closed.
+        infowindow.addListener('closeclick',function(){
+            marker.setAnimation(null);
             infowindow.setMarker = null;
+            //console.log(self.filterLocation());
+            if(!self.filterLocation()){
+                centerMap();
+            }
           });
+    }
+
+
+    ko.bindingHandlers.selectOnFocus = {
+        update: function(element){
+            ko.utils.registerEventHandler(element, 'focus', function(e){
+                console.log(element);
+                element.select();
+            });
+
         }
-      }
+    }
+
 
 if(typeof google === 'object'){
+    console.log('Initializing');
     google.maps.event.addDomListener(window,'load',this.initialize)
 }
 else{
@@ -408,6 +430,8 @@ else{
 }
 
 }
+
+
 
 ko.applyBindings(new viewModel());
 
