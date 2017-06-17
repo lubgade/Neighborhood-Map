@@ -52,7 +52,11 @@ html,body{
 
 .results li:hover{
     cursor: pointer;
-    background-color: yellow;
+}
+
+.address{
+    font-size: 12px;
+    line-height: 1.5;
 }
 
 .filter_form{
@@ -73,8 +77,8 @@ html,body{
     width: 40px;
 }
 
-.autocomplete{
-    font-size: xx-small;
+.ui-menu-item{
+    font-size: small;
 }
 
 .pagination ul{
@@ -84,6 +88,13 @@ html,body{
 .pagination ul li{
     display: inline-block;
 }
+
+.pagination ul li a:focus,
+.pagination ul li a:hover,
+.page-link.active {
+  background-color: red;
+}
+
 
 
 .header__menu {
