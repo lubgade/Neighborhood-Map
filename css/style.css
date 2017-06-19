@@ -89,14 +89,6 @@ html,body{
     display: inline-block;
 }
 
-.pagination ul li a:focus,
-.pagination ul li a:hover,
-.page-link.active {
-  background-color: red;
-}
-
-
-
 .header__menu {
   display: none;
 }
