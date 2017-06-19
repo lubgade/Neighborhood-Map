@@ -26,6 +26,7 @@ function viewModel(){
     this.results_found = ko.observable();
     this.pageNumber = ko.observable(0);
 
+    //restaurant object with all its info
     var restaurant = function(data){
         this.name = data.name;
         this.address = data.location.address;
@@ -37,11 +38,9 @@ function viewModel(){
         this.thumbnail = data.thumb;
     }
 
-
+    //Initialize Google map
     this.initialize = function(){
-
         console.log('Initmap');
-        //  creates a new map - only center and zoom are required.
         map = new google.maps.Map(document.getElementById('map'), {
         center: {lat: initialLat, lng: initialLng},
         zoom: 4,
@@ -59,9 +58,10 @@ function viewModel(){
             componentRestrictions: {country: 'us'}
             };
 
+        //set autocomplete for city
         newLocation = new google.maps.places.Autocomplete(input,options);
-        console.log(newLocation);
 
+        //listener for city change
         newLocation.addListener('place_changed', function(){
                 var center = new google.maps.LatLng(initialLat, initialLng);
                 map.panTo(center);
@@ -76,6 +76,7 @@ function viewModel(){
                 self.filteredList.removeAll();
                 });
 
+        //mobile view
         var menu = document.querySelector('#menu');
         var drawer = document.querySelector('.nav');
         menu.addEventListener('click',function(e){
@@ -85,6 +86,8 @@ function viewModel(){
     }; //end of initialize
 
 
+    // Takes in the selected city to find it's location & further retrieve
+    // Zomato place_id
     this.processSearchLocation = function(formElement){
         self.status('Loading....')
         self.showDiv(true);
@@ -99,8 +102,7 @@ function viewModel(){
             {
                address: city
             }, function(results, status){
-                console.log(results);
-                console.log(status);
+                //console.log(results);
                 if(status == google.maps.GeocoderStatus.OK){
                     map.setCenter(results[0].geometry.location);
                     map.setZoom(11);
@@ -118,6 +120,8 @@ function viewModel(){
     }; //end of processSearchLocation
 
 
+    //Retrieves Zomato city_id with name of the place & lat/lng.
+    //Then retrieve restaurants using the city_id
     function getZomatoCityId(place_name, newLat, newLng){
         var zomatoUrl = "https://developers.zomato.com/api/v2.1/" +
                         "cities?q=";
@@ -134,6 +138,9 @@ function viewModel(){
         });
     }
 
+
+    //Retrieve first 20 restaurants using Zomato city_id
+    //Show the restaurants in list view as well as markers on the map
     function getZomatoRestaurants(place_id){
         var zomatoUrl = "https://developers.zomato.com/api/v2.1/" +
                         "search?entity_id=" +
@@ -143,14 +150,10 @@ function viewModel(){
             url: cors_anywhere_url + zomatoUrl,
             headers: {'user_key': '26ce1af09de13709ce7601f27ae5e14d'},
             }).done(function(response){
-                console.log(response);
-                console.log(response.results_found);
                 self.results_found(response.results_found);
-                console.log(self.results_found());
                 self.status('Loading...');
                 showRestaurants(response);
                 var b = map.getBounds();
-                console.log(b);
                 filterLoc();
 
             }).fail(function(){
@@ -160,13 +163,20 @@ function viewModel(){
     } //end of getZomatoRestaurants_by_id
 
 
-
+    //Filter results by name & show corresponding marker
     this.filterResults = function(formElement){
         self.status('filtered result');
-        showMarker(self.filterLocation().text, self.filterLocation().ad);
+        if(self.filterLocation()){
+            showMarker(self.filterLocation().text, self.filterLocation().ad);
+        }
+        else{
+            window.alert('Please select a name');
+        }
     }
 
 
+    //Go to a particular marker & open the infowindow when a restaurant is
+    //clicked on the list view
     this.goToMarker = function(clickedRestaurant){
         var name = clickedRestaurant.name;
         var address = clickedRestaurant.address;
@@ -174,49 +184,43 @@ function viewModel(){
     }
 
 
+    //Find the marker from the markers array to open the marker
     function showMarker(name,address){
-        if(name){
-            for(var i=0;i<markers.length;i++){
-                if(name == markers[i].marker.title &&
-                    address == markers[i].address){
-                    b = map.getBounds();
-                    z = map.getZoom();
-                    map.panTo(markers[i].marker.position);
-                    map.setZoom(15);
-                    populateInfoWindow(markers[i].marker,largeInfowindow,
-                                       markers[i].content);
-                    markers[i].marker.setAnimation(google.maps.Animation.BOUNCE);
-                    break;
-                }
+        for(var i=0;i<markers.length;i++){
+            if(name == markers[i].marker.title &&
+                address == markers[i].address){
+                b = map.getBounds();
+                z = map.getZoom();
+                map.panTo(markers[i].marker.position);
+                map.setZoom(15);
+                populateInfoWindow(markers[i].marker,largeInfowindow,
+                                   markers[i].content);
+                markers[i].marker.setAnimation(google.maps.Animation.BOUNCE);
+                break;
             }
-        }
-        else{
-            window.alert('please select a name');
         }
     }
 
 
+    //Autocomplete for filtering results by name
     function filterLoc(){
         var list = [];
         for(var i=0;i<self.restaurantList().length;i++){
             list.push({label:self.restaurantList()[i].name,
-                       address:self.restaurantList()[i].address,});
+                       address:self.restaurantList()[i].address});
         }
 
         $('#filter_text').autocomplete({
             source: list,
             select: function(event,ui){
-                        var text = ui.item.label;
+                        var name = ui.item.label;
                         var ad = ui.item.address;
-                        self.filterLocation({text:text,ad:ad});
-            },
-            change: function(event, ui){
-                        if(ui.item != null){
-                            var text = ui.item.value;
-                            var ad = ui.item.address;
+                        self.filterLocation({text:name,ad:ad});
+                        var text = ui.item;
+                        if(text != null){
                             for(var i=0;i<list.length;i++){
-                                if(text == list[i].label &&
-                                   ad == list[i].address){
+                                if(text.label == list[i].label &&
+                                   text.address == list[i].address){
                                     self.filteredList.removeAll();
                                     self.filteredList.push({name:list[i].label,
                                     address:list[i].address});
@@ -225,13 +229,29 @@ function viewModel(){
                             }
                         }
                         else{
-                        window.alert('please select a name');
+                            window.alert('please select a name');
                         }
             }
         });
     }
 
 
+    //clear filter field & show all restaurants on that page by centering the
+    //map
+    this.clearFilter = function(){
+        self.status(total + ' results found');
+        largeInfowindow.close();
+        centerMap();
+        self.filterLocation('');
+        self.filteredList.removeAll();
+        self.filteredList(self.restaurantList.slice(0));
+        for(var i=0;i<markers.length;i++){
+            markers[i].marker.setMap(map);
+        }
+    }
+
+
+    //Center map for a particular page of restaurants
     function centerMap(){
         var center = map.getCenter();
         var lat = self.searchLocation().geometry.location.lat();
@@ -246,19 +266,9 @@ function viewModel(){
     }
 
 
-    this.clearFilter = function(){
-        self.status(total + ' results found');
-        largeInfowindow.close();
-        centerMap();
-        self.filterLocation('');
-        self.filteredList.removeAll();
-        self.filteredList(self.restaurantList.slice(0));
-        for(var i=0;i<markers.length;i++){
-            markers[i].marker.setMap(map);
-        }
-    }
-
-
+    //Calculate the no of pages to be displayed based on the results found
+    //from Zomato API(Zomato only gives max 100 results even if the actual
+    //results are more than that)
     this.pageList = ko.computed(function(){
         var count = 0;
         for(var i=20;i<self.results_found();i=i+20){
@@ -276,6 +286,8 @@ function viewModel(){
     },this);
 
 
+    //go to a particular page of results on the list view & access restaurants
+    //for that page
     this.goToPage = function(page){
         self.pageNumber(self.pageList()[page]);
         self.restaurantList.removeAll();
@@ -288,6 +300,7 @@ function viewModel(){
     }
 
 
+    //hides all current markers set on the map
     function hideMarkers() {
             for (var i = 0; i < markers.length; i++) {
                 markers[i].marker.setMap(null);
@@ -295,7 +308,8 @@ function viewModel(){
       }
 
 
-
+    //Get all restaurants for a particular page(Zomato provides max 20 results
+    //per page) & show results on the map as well as a list view
     function getAllRestaurants(start){
         var zomatoUrl = "https://developers.zomato.com/api/v2.1/" +
                         "search?entity_id=" +
@@ -315,6 +329,8 @@ function viewModel(){
     }
 
 
+    //Store the retrieved results for that page for creating a list view & show
+    //them on the map
     function showRestaurants(data){
         total = data.results_found;
                 if(total > 100){
@@ -335,6 +351,9 @@ function viewModel(){
     } //end of showRestaurants
 
 
+    //Create a marker for each restaurant r that is passed.Also create a content
+    //string which stores all the restaurant info & push it into the markers
+    //array.Also set a listener for each marker
     function createMarker(r){
         self.showDiv(true);
         var position, lat, lng;
@@ -371,6 +390,8 @@ function viewModel(){
     } // end of createMarker
 
 
+    //Setting an infowindow for the chosen marker.Also set a listener for
+    //closing the infowindow
     function populateInfoWindow(marker, infowindow, contentString) {
         infowindow.marker = marker;
         infowindow.setContent(contentString);
@@ -387,6 +408,7 @@ function viewModel(){
     }
 
 
+    //Highlight search text
     ko.bindingHandlers.selectOnFocus = {
         update: function(element,allBindings){
             ko.utils.registerEventHandler(element, 'focus', function(e){
@@ -396,6 +418,7 @@ function viewModel(){
     }
 
 
+//Error handling if google maps fail to load
 if(typeof google === 'object'){
     google.maps.event.addDomListener(window,'load',this.initialize)
 }
