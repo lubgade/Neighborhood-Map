@@ -16,7 +16,7 @@ This project gives users a list of Indian restaurants in the choice of your city
   * No of restaurants found
   * Max 20 restaurants per page(Zomato only gives 100 restaurants max even if it finds more results)
   * Ability to access the info of a specific restaurant by clicking on the restaurant on the list
-* Search also shows markers on the map for corresponding restaurants
+* Search also shows markers on the map for corresponding restaurants on the list view
 * Infowindow for the marker or the list view entry which shows the name, address, thumbnail(if available), Average cost for two, user rating and the menu url
 * Filter results by name
 * Mobile responsive
