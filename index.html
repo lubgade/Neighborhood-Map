@@ -39,7 +39,7 @@
 
 <nav id="drawer" class="nav">
 <div class="displayDiv" data-bind="visible: showDiv">
-    <div>
+    <div data-bind="visible: filteredList">
         <h3 class="status" data-bind="text: status"></h3>
         <hr>
     </div>
@@ -56,7 +56,12 @@
         <ul class="page" data-bind="foreach: pageList">
             <li>
                 <a href="#" class="page-link"
-                   data-bind="text: $data+1, click: $parent.goToPage"></a>
+                   data-bind="text: $data+1,
+                              style: {
+                              color: $parent.pageNumber() == $data ? 'fff': '',
+                              background: $parent.pageNumber() == $data ?
+                              '#7dc0ff':''},
+                              click: $parent.goToPage"></a>
             </li>
         </ul>
     </div>
