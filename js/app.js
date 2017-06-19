@@ -11,7 +11,7 @@ function viewModel(){
     var largeInfowindow = new google.maps.InfoWindow({maxwidth: 300});
     var cors_anywhere_url = 'https://cors-anywhere.herokuapp.com/';
     var bounds = new google.maps.LatLngBounds();
-    var b = new google.maps.LatLngBounds;
+    var b = new google.maps.LatLngBounds();
     var z;
 
     // Create a new blank array for all the listing markers.
@@ -36,7 +36,7 @@ function viewModel(){
         this.lat = parseFloat(data.location.latitude);
         this.lng = parseFloat(data.location.longitude);
         this.thumbnail = data.thumb;
-    }
+    };
 
     //Initialize Google map
     this.initialize = function(){
@@ -89,11 +89,13 @@ function viewModel(){
     // Takes in the selected city to find it's location & further retrieve
     // Zomato place_id
     this.processSearchLocation = function(formElement){
-        self.status('Loading....')
+        self.status('Loading....');
         self.showDiv(true);
         var geocoder = new google.maps.Geocoder();
-        var place_name = formElement["searchText"].value;
-        if(place_name == ''){
+        //var place_name = formElement["searchText"].value;
+        console.log(formElement.searchText.value);
+        var place_name = formElement.searchText.value;
+        if(place_name === ''){
             window.alert('Please select a city');
         }
         else{
@@ -144,7 +146,7 @@ function viewModel(){
     function getZomatoRestaurants(place_id){
         var zomatoUrl = "https://developers.zomato.com/api/v2.1/" +
                         "search?entity_id=" +
-                        place_id + "&entity_type=city&cuisines=148"
+                        place_id + "&entity_type=city&cuisines=148";
         $.ajax({
             type: 'GET',
             url: cors_anywhere_url + zomatoUrl,
@@ -172,7 +174,7 @@ function viewModel(){
         else{
             window.alert('Please select a name');
         }
-    }
+    };
 
 
     //Go to a particular marker & open the infowindow when a restaurant is
@@ -181,7 +183,7 @@ function viewModel(){
         var name = clickedRestaurant.name;
         var address = clickedRestaurant.address;
         showMarker(name,address);
-    }
+    };
 
 
     //Find the marker from the markers array to open the marker
@@ -217,7 +219,7 @@ function viewModel(){
                         var ad = ui.item.address;
                         self.filterLocation({text:name,ad:ad});
                         var text = ui.item;
-                        if(text != null){
+                        if(text !== null){
                             for(var i=0;i<list.length;i++){
                                 if(text.label == list[i].label &&
                                    text.address == list[i].address){
@@ -248,7 +250,7 @@ function viewModel(){
         for(var i=0;i<markers.length;i++){
             markers[i].marker.setMap(map);
         }
-    }
+    };
 
 
     //Center map for a particular page of restaurants
@@ -272,7 +274,7 @@ function viewModel(){
     this.pageList = ko.computed(function(){
         var count = 0;
         for(var i=20;i<self.results_found();i=i+20){
-            if(i%2 == 0 && i<=100){
+            if(i%2 === 0 && i<=100){
                 count++;
             }
             else{
@@ -297,7 +299,7 @@ function viewModel(){
         map.setZoom(11);
         var start = page * 20;
         getAllRestaurants(start);
-    }
+    };
 
 
     //hides all current markers set on the map
@@ -314,7 +316,7 @@ function viewModel(){
         var zomatoUrl = "https://developers.zomato.com/api/v2.1/" +
                         "search?entity_id=" +
                         place_id + "&entity_type=city&start=" +
-                        start + "&cuisines=148"
+                        start + "&cuisines=148";
         $.ajax({
             type: 'GET',
             url: cors_anywhere_url + zomatoUrl,
@@ -337,7 +339,7 @@ function viewModel(){
                     total = 100;
                 }
                 self.status(total + ' results found...');
-                if(total == 0){
+                if(total === 0){
                     self.status('Sorry no results');
                 }
 
@@ -415,12 +417,12 @@ function viewModel(){
                 element.select();
             });
         }
-    }
+    };
 
 
 //Error handling if google maps fail to load
 if(typeof google === 'object'){
-    google.maps.event.addDomListener(window,'load',this.initialize)
+    google.maps.event.addDomListener(window,'load',this.initialize);
 }
 else{
     this.handleError('Cannot load the map...Please reload the page');
