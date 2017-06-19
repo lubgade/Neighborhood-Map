@@ -28,4 +28,5 @@ This project gives users a list of Indian restaurants in the choice of your city
 ## API's/CORS
 * [Google Maps API](https://developers.google.com/maps/)
 * [Zomato API](https://developers.zomato.com/api)
+* [jQuery ui](http://api.jqueryui.com/1.8/)
 * [CORS Anywhere](https://github.com/Rob--W/cors-anywhere)
