@@ -1,7 +1,7 @@
 # Neighborhood-Map
 
 ## Overview
-This project gives users a list of Indian restaurants in the choice of your city(only in US). Restaurant data is accessed via the Zomato API. Results are displayed in a list view - 20 results per page. The corresponding markers are displayed on the map based on the city chosen. Users can also filter from the results by name.
+This project gives users a list of Indian restaurants in the choice of your city(only in US). Restaurant data is accessed via the Zomato API. Results are displayed in a list view - 20 results per page. The corresponding markers are displayed on the map based on the city chosen. Users can also filter from the results by name. Live version of the project [here]()
 
 ## Usage
 * To use this project - 
