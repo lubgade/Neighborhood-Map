@@ -1,13 +1,12 @@
-
+var map;
+var initialLat = 39.8282;
+var initialLng = -98.5795;
 function viewModel(){
     var self = this;
-    var map;
-    var initialLat = 39.8282;
-    var initialLng = -98.5795;
     var place = '';
-    var newLocation;
     var place_id;
     var total;
+
     var largeInfowindow = new google.maps.InfoWindow({maxwidth: 300});
     var cors_anywhere_url = 'https://cors-anywhere.herokuapp.com/';
     var bounds = new google.maps.LatLngBounds();
@@ -17,12 +16,11 @@ function viewModel(){
     // Create a new blank array for all the listing markers.
     var markers = [];
     this.showDiv = ko.observable(false);
-    selected = ko.observable(false);
     this.searchLocation = ko.observable();
     this.status = ko.observable('');
-    this.filterLocation = ko.observable();
+    this.filterLocation = ko.observable('');
     this.restaurantList = ko.observableArray([]);
-    this.filteredList = ko.observableArray([]);
+    //this.filteredList = ko.observableArray([]);
     this.results_found = ko.observable();
     this.pageNumber = ko.observable(0);
 
@@ -35,34 +33,26 @@ function viewModel(){
         this.menuUrl = data.menu_url;
         this.lat = parseFloat(data.location.latitude);
         this.lng = parseFloat(data.location.longitude);
-        this.thumbnail = data.thumb;
+        if(data.thumb){
+            this.thumbnail = data.thumb;
+        }
+        else{
+            this.thumbnail = "http://via.placeholder.com/140x100";
+        }
     };
-
-    //Initialize Google map
-    this.initialize = function(){
-        console.log('Initmap');
-        map = new google.maps.Map(document.getElementById('map'), {
-        center: {lat: initialLat, lng: initialLng},
-        zoom: 4,
-        zoomControlOptions: {
-            position: google.maps.ControlPosition.RIGHT_CENTER,
-            style: google.maps.ZoomControlStyle.SMALL
-        },
-        scrollwheel: false,
-        zoomControl: true
-        });
 
         var input = document.getElementById('input_text');
         var options = {
             types: ['(cities)'],
             componentRestrictions: {country: 'us'}
             };
-
+        console.log('autocomplete');
         //set autocomplete for city
         newLocation = new google.maps.places.Autocomplete(input,options);
 
         //listener for city change
         newLocation.addListener('place_changed', function(){
+                console.log('place changed');
                 var center = new google.maps.LatLng(initialLat, initialLng);
                 map.panTo(center);
                 map.setZoom(4);
@@ -73,7 +63,7 @@ function viewModel(){
                 self.showDiv(false);
                 markers = [];
                 self.restaurantList.removeAll();
-                self.filteredList.removeAll();
+                //self.filteredList.removeAll();
                 });
 
         //mobile view
@@ -83,7 +73,7 @@ function viewModel(){
             drawer.classList.toggle('open');
             e.stopPropagation();
         });
-    }; //end of initialize
+    //}; //end of initialize
 
 
     // Takes in the selected city to find it's location & further retrieve
@@ -152,18 +142,35 @@ function viewModel(){
             url: cors_anywhere_url + zomatoUrl,
             headers: {'user_key': '26ce1af09de13709ce7601f27ae5e14d'},
             }).done(function(response){
+                console.log(response);
                 self.results_found(response.results_found);
                 self.status('Loading...');
                 showRestaurants(response);
-                var b = map.getBounds();
-                filterLoc();
-
+                b = map.getBounds();
+                z = map.getZoom();
             }).fail(function(){
                 window.alert("error getting restaurants");
 
         });
     } //end of getZomatoRestaurants_by_id
 
+
+    this.filteredList = ko.computed(function(){
+        var filter = self.filterLocation().toLowerCase();
+        console.log(self.filterLocation());
+        //console.log(self.filteredList());
+        console.log(filter);
+        if(self.filterLocation()){
+            console.log('true');
+           return ko.utils.arrayFilter(self.restaurantList(),
+                  function(restaurant){
+              return restaurant.name.toLowerCase().indexOf(filter) != -1;
+           });
+        }
+        else{
+            return self.restaurantList.slice(0);
+        }
+    }, this);
 
     //Filter results by name & show corresponding marker
     this.filterResults = function(formElement){
@@ -191,8 +198,6 @@ function viewModel(){
         for(var i=0;i<markers.length;i++){
             if(name == markers[i].marker.title &&
                 address == markers[i].address){
-                b = map.getBounds();
-                z = map.getZoom();
                 map.panTo(markers[i].marker.position);
                 map.setZoom(15);
                 populateInfoWindow(markers[i].marker,largeInfowindow,
@@ -204,68 +209,17 @@ function viewModel(){
     }
 
 
-    //Autocomplete for filtering results by name
-    function filterLoc(){
-        var list = [];
-        for(var i=0;i<self.restaurantList().length;i++){
-            list.push({label:self.restaurantList()[i].name,
-                       address:self.restaurantList()[i].address});
-        }
-
-        $('#filter_text').autocomplete({
-            source: list,
-            select: function(event,ui){
-                        var name = ui.item.label;
-                        var ad = ui.item.address;
-                        self.filterLocation({text:name,ad:ad});
-                        var text = ui.item;
-                        if(text !== null){
-                            for(var i=0;i<list.length;i++){
-                                if(text.label == list[i].label &&
-                                   text.address == list[i].address){
-                                    self.filteredList.removeAll();
-                                    self.filteredList.push({name:list[i].label,
-                                    address:list[i].address});
-                                    break;
-                                }
-                            }
-                        }
-                        else{
-                            window.alert('please select a name');
-                        }
-            }
-        });
-    }
-
-
     //clear filter field & show all restaurants on that page by centering the
     //map
     this.clearFilter = function(){
-        self.status(total + ' results found');
         largeInfowindow.close();
-        centerMap();
+        map.fitBounds(b);
+        map.setZoom(z);
         self.filterLocation('');
-        self.filteredList.removeAll();
-        self.filteredList(self.restaurantList.slice(0));
         for(var i=0;i<markers.length;i++){
             markers[i].marker.setMap(map);
         }
     };
-
-
-    //Center map for a particular page of restaurants
-    function centerMap(){
-        var center = map.getCenter();
-        var lat = self.searchLocation().geometry.location.lat();
-        var lng = self.searchLocation().geometry.location.lng();
-        var cityCenter = new google.maps.LatLng(lat, lng);
-        if(center != cityCenter){
-            //map.panTo(cityCenter);
-            map.fitBounds(b);
-            map.setZoom(z);
-            //map.setZoom(11);
-        }
-    }
 
 
     //Calculate the no of pages to be displayed based on the results found
@@ -293,7 +247,7 @@ function viewModel(){
     this.goToPage = function(page){
         self.pageNumber(self.pageList()[page]);
         self.restaurantList.removeAll();
-        self.filteredList.removeAll();
+        //self.filteredList.removeAll();
         hideMarkers();
         markers = [];
         map.setZoom(11);
@@ -323,7 +277,7 @@ function viewModel(){
             headers: {'user_key': '26ce1af09de13709ce7601f27ae5e14d'},
             }).done(function(response){
                 showRestaurants(response);
-                filterLoc();
+                //filterLoc();
 
             }).fail(function(){
                 window.alert("error getting restaurants");
@@ -349,7 +303,8 @@ function viewModel(){
             createMarker(r);
         }
         map.fitBounds(bounds);
-        self.filteredList(self.restaurantList.slice(0));
+        b = map.getBounds();
+        z = map.getZoom();
     } //end of showRestaurants
 
 
@@ -372,7 +327,7 @@ function viewModel(){
         bounds.extend(marker.position);
 
         var contentString = '<div id="infoWindow">' +
-                            '<img src=' + r.thumb + ' alt="image">' +
+                             '<img src=' + r.thumb + ' >' +
                             '<h2>' + r.name + '</h2>' +
                             '<p>' + r.location.address + '</p>' +
                             '<p>Average cost for two: $' +
@@ -419,20 +374,31 @@ function viewModel(){
         }
     };
 
+}
+
+
+//Initialize Google map
+function initMap(){
+        console.log('Initmap');
+        map = new google.maps.Map(document.getElementById('map'), {
+        center: {lat: initialLat, lng: initialLng},
+        zoom: 4,
+        zoomControlOptions: {
+            position: google.maps.ControlPosition.RIGHT_CENTER,
+            style: google.maps.ZoomControlStyle.SMALL
+        },
+        scrollwheel: false,
+        zoomControl: true
+        });
+        var newLocation;
+        ko.applyBindings(new viewModel());
+    }
 
 //Error handling if google maps fail to load
-if(typeof google === 'object'){
-    google.maps.event.addDomListener(window,'load',this.initialize);
-}
-else{
-    this.handleError('Cannot load the map...Please reload the page');
+function error(){
+    window.alert('Sorry Google maps failed to load. Please try again....');
 }
 
-}
-
-
-
-ko.applyBindings(new viewModel());
 
 
 
