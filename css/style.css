@@ -94,6 +94,11 @@ html,body{
 }
 
 @media screen and (max-width:450px) {
+    .header__menu img {
+        width: 32px;
+        fill: black;
+  }
+
     .searchbar{
         width: 70%;
         margin: 0;
@@ -130,10 +135,6 @@ html,body{
     top: 25px;
     right: 0;
     padding: 1em;
-  }
-  .header__menu svg {
-    width: 32px;
-    fill: black;
   }
 
 }
