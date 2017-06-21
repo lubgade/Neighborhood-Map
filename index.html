@@ -12,10 +12,8 @@
 <body>
 <div id="map"></div>
 <a id="menu" class="header__menu">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-      <path d="M2 6h20v3H2zm0 5h20v3H2zm0 5h20v3H2z"/>
-    </svg>
-  </a>
+    <img src="images/mobile.svg" alt="mobile">
+</a>
 
 <div class="searchbar">
     <form data-bind="submit: processSearchLocation">
@@ -24,14 +22,12 @@
                name="searchText" placeholder="Select a city">
         <input type="submit" value="Go" id="submit">
     </form>
-    <form data-bind="submit: filterResults" class="filter_form">
-        <input type="text" id="filter_text"
-               data-bind="value: filterLocation, selectOnFocus:true"
-               name="filterText" placeholder="filter by name">
-        <input type="submit" value="filter" id="filter">
-        <p class="clear_results"
-           data-bind="visible: filterLocation, click: clearFilter">clear
-            filter</p>
+    <input type="text" id="filter_text"
+           data-bind="value: filterLocation, valueUpdate: 'afterkeydown', selectOnFocus:true"
+           name="filterText" placeholder="filter by name">
+    <p class="clear_results"
+       data-bind="visible: filterLocation, click: clearFilter">clear filter
+    </p>
     </form>
 </div>
 
@@ -40,19 +36,22 @@
 <nav id="drawer" class="nav">
 <div class="displayDiv" data-bind="visible: showDiv">
     <div data-bind="visible: filteredList">
-        <h3 class="status" data-bind="text: status"></h3>
+        <h3 class="status"
+            data-bind="text: filteredList().length">
+            <span> results found</span>
+        </h3>
         <hr>
     </div>
     <ul class="results nav__list" data-bind="foreach: filteredList">
         <li data-bind="click: $parent.goToMarker"
             class="nav__item">
-            <h4 data-bind="text: name"></h4>
-            <p data-bind="text: address" class="address"></p>
+            <h4 data-bind="text: $data.name"></h4>
+            <p data-bind="text: $data.address" class="address"></p>
         </li>
         <hr>
     </ul>
     <div class="pagination"
-         data-bind="visible: filteredList().length>2">
+         data-bind="ifnot: filterLocation()">
         <ul class="page" data-bind="foreach: pageList">
             <li>
                 <a href="#" class="page-link"
@@ -70,12 +69,12 @@
 
 
 
-<script src="https://maps.googleapis.com/maps/api/js?libraries=geometry,places&key=AIzaSyDExjJZVNf-xT7k9j3K3RerY0dwfkpJ7zA&v=3">
-
-</script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.17/jquery-ui.min.js"></script>
 <script src="js/knockout-3.2.0.js"></script>
 <script src="js/app.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?libraries=geometry,places&key=AIzaSyDExjJZVNf-xT7k9j3K3RerY0dwfkpJ7zA&v=3&callback=initMap" async defer onerror="error()">
+</script>
+
 </body>
 </html>
