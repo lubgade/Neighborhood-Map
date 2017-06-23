@@ -18,10 +18,11 @@
 <div class="searchbar">
     <form data-bind="submit: processSearchLocation">
         <input type="text" id="input_text"
-               data-bind="searchLocation, selectOnFocus:true"
-               name="searchText" placeholder="Select a city">
+               data-bind="value: searchLocation, selectOnFocus:true"
+               name="searchText">
         <input type="submit" value="Go" id="submit">
     </form>
+    <br>
     <input type="text" id="filter_text"
            data-bind="value: filterLocation, valueUpdate: 'afterkeydown', selectOnFocus:true"
            name="filterText" placeholder="filter by name">
@@ -36,23 +37,23 @@
 <nav id="drawer" class="nav">
 <div class="displayDiv" data-bind="visible: showDiv">
     <div data-bind="visible: filteredList">
-        <h3 class="status"
-            data-bind="text: filteredList().length">
-            <span> results found</span>
+        <h3 class="status">Results found:
+            <span data-bind="text: filteredList().length"> </span>
         </h3>
         <hr>
     </div>
     <ul class="results nav__list" data-bind="foreach: filteredList">
         <li data-bind="click: $parent.goToMarker"
             class="nav__item">
-            <h4 data-bind="text: $data.name"></h4>
-            <p data-bind="text: $data.address" class="address"></p>
+            <h4 data-bind="text: $data.restaurant.name"></h4>
+            <p data-bind="text: $data.restaurant.address" class="address"></p>
         </li>
         <hr>
     </ul>
     <div class="pagination"
          data-bind="ifnot: filterLocation()">
-        <ul class="page" data-bind="foreach: pageList">
+        <ul class="page"
+            data-bind="foreach: pageList">
             <li>
                 <a href="#" class="page-link"
                    data-bind="text: $data+1,
