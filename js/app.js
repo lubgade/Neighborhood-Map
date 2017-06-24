@@ -346,7 +346,7 @@ function viewModel(){
 
         //bounds.extend(marker.position);
 
-        var contentString = '<div id="infoWindow">' +
+        var contentString = '<div id="info_window">' +
                              '<img src=' + r.thumb + ' >' +
                             '<h2>' + r.name + '</h2>' +
                             '<p>' + r.location.address + '</p>' +
@@ -358,9 +358,7 @@ function viewModel(){
         var address = r.location.address;
 
          var newMarker = {marker:marker, content:contentString};
-        // Push the marker to our array of markers.
-          //markers.push({marker:marker, content: contentString,
-          //              address: address});
+
           // Create an onclick event to open an infowindow at each marker.
           marker.addListener('click', function() {
             populateInfoWindow(this, largeInfowindow, contentString);
