@@ -1,16 +1,17 @@
-html,body{
+html,
+body {
     font-family: Arial, sans-serif;
     height: 100%;
     margin: 0;
     padding: 0;
 }
 
-#map{
+#map {
     height: 100%;
     max-width: 100%;
 }
 
-.searchbar{
+.searchbar {
     position: absolute;
     top: 25px;
     left: 10px;
@@ -19,19 +20,17 @@ html,body{
     background: rgba(255,255,255,0.8);
 }
 
-#infoWindow{
-
+#info_window {
     height: 200px;
     width: 200px;
 }
 
-#infoWindow img{
+#info_window img {
     width: 90px;
     height: 90px;
 }
 
-
-.displayDiv{
+.display_div {
     position: absolute;
     top: 150px;
     left: 10px;
@@ -39,10 +38,9 @@ html,body{
     padding: 10px;
     width: 20%;
     background: rgba(255,255,255,0.8);
-
 }
 
-.results{
+.results {
     max-height: 300px;
     overflow: auto;
     list-style-type: none;
@@ -50,20 +48,20 @@ html,body{
     padding: 0;
 }
 
-.results li:hover{
+.results li:hover {
     cursor: pointer;
 }
 
-.address{
+.address {
     font-size: 12px;
     line-height: 1.5;
 }
 
-.filter_form{
+.filter_form {
     margin-top: 10px;
 }
 
-.clear_results{
+.clear_results {
     margin-bottom: 0;
     margin-top: 5px;
     padding: 5px;
@@ -73,19 +71,19 @@ html,body{
     color: #2a6496;
 }
 
-#submit{
+#submit {
     width: 40px;
 }
 
-.ui-menu-item{
+.ui-menu-item {
     font-size: small;
 }
 
-.pagination ul{
+.pagination ul {
     list-style-type: none;
 }
 
-.pagination ul li{
+.pagination ul li {
     display: inline-block;
 }
 
@@ -97,45 +95,49 @@ html,body{
     .header__menu img {
         width: 32px;
         fill: black;
-  }
+    }
 
-    .searchbar{
+    .searchbar {
         width: 70%;
         margin: 0;
     }
 
-    .displayDiv{
+    .displayDiv {
         width: 50%;
     }
-  .nav {
-    z-index: 10;
-    background-color: #fff;
-    width: 300px;
-    position: absolute;
-    /* This trasform moves the drawer off canvas. */
-    top: 40px;
-    -webkit-transform: translate(-300px, 0);
-    transform: translate(-300px, 0);
-    /* Optionally, we animate the drawer. */
-    transition: transform 0.3s ease;
-  }
-  .nav.open {
-    -webkit-transform: translate(0, 0);
-    transform: translate(0, 0);
-  }
-  .nav__item {
-    display: list-item;
-    border-bottom: 1px solid #E0E0E0;
-    width: 100%;
-    text-align: left;
-  }
-  .header__menu {
-    display: inline-block;
-    position: absolute;
-    top: 25px;
-    right: 0;
-    padding: 1em;
-  }
+
+    .nav {
+        z-index: 10;
+        background-color: #fff;
+        width: 300px;
+        position: absolute;
+        /* This trasform moves the drawer off canvas. */
+        top: 40px;
+        -webkit-transform: translate(-300px, 0);
+        transform: translate(-300px, 0);
+        /* Optionally, we animate the drawer. */
+        transition: transform 0.3s ease;
+    }
+
+    .nav.open {
+        -webkit-transform: translate(0, 0);
+        transform: translate(0, 0);
+    }
+
+    .nav__item {
+        display: list-item;
+        border-bottom: 1px solid #E0E0E0;
+        width: 100%;
+        text-align: left;
+    }
+
+    .header__menu {
+        display: inline-block;
+        position: absolute;
+        top: 25px;
+        right: 0;
+        padding: 1em;
+    }
 
 }
 
