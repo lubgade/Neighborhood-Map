@@ -13,7 +13,6 @@ function viewModel(){
     var b = new google.maps.LatLngBounds();
     var z;
 
-    // Create a new blank array for all the listing markers.
     this.showDiv = ko.observable(false);
     this.searchLocation = ko.observable('New York,NY,USA');
     this.filterLocation = ko.observable('');
@@ -83,20 +82,16 @@ function viewModel(){
         }
         else{
             var city = place_name;
-            console.log(city);
             geocoder.geocode(
             {
                address: city
             }, function(results, status){
-                console.log(results);
                 if(status == google.maps.GeocoderStatus.OK){
                     bounds = new google.maps.LatLngBounds();
                     placeBounds = results[0].geometry.bounds;
                     bounds = placeBounds;
                     var newLat = results[0].geometry.location.lat();
-                    console.log(newLat);
                     var newLng = results[0].geometry.location.lng();
-                    console.log(newLng);
                     var location = new google.maps.LatLng(newLat,newLng);
                     map.setCenter(location);
                     map.setZoom(11);
@@ -126,7 +121,6 @@ function viewModel(){
                  "&lat=" + newLat + "&lon=" + newLng + "&count=1",
             headers: {'user_key': '26ce1af09de13709ce7601f27ae5e14d'},
             }).done(function(response){
-                console.log(response);
                 if(response.location_suggestions.length > 0){
                         var id = response.location_suggestions[0].id;
                         place_id = id;
@@ -154,7 +148,6 @@ function viewModel(){
             url: corsAnywhereUrl + zomatoUrl,
             headers: {'user_key': '26ce1af09de13709ce7601f27ae5e14d'},
             }).done(function(response){
-                console.log(response);
                 self.results_found(response.results_found);
                 showRestaurants(response);
                 b = map.getBounds();
@@ -170,7 +163,6 @@ function viewModel(){
     this.filteredList = ko.computed(function(){
         var filter = self.filterLocation().toLowerCase();
         if(self.filterLocation()){
-            console.log('true');
            return ko.utils.arrayFilter(self.restaurantList(),
            function(restaurant){
            if(restaurant.restaurant.name.toLowerCase().indexOf(filter) !== -1){
@@ -193,7 +185,6 @@ function viewModel(){
     //Go to a particular marker & open the infowindow when a restaurant is
     //clicked on the list view
     this.goToMarker = function(clickedRestaurant){
-        console.log(clickedRestaurant);
         var name = clickedRestaurant.restaurant.name;
         var address = clickedRestaurant.restaurant.address;
         showMarker(name,address);
@@ -278,7 +269,6 @@ function viewModel(){
     //hides all current markers set on the map
     function hideMarkers() {
             var l = self.restaurantList().length;
-            console.log(l);
             for (var i = 0; i < l; i++) {
                 self.restaurantList()[i].marker.marker.setMap(null);
         }
@@ -314,13 +304,13 @@ function viewModel(){
             var marker = createMarker(r);
             if(marker){
                 var newRestaurant = new restaurant(r);
-                self.restaurantList.push({restaurant:newRestaurant,marker:marker});
+                self.restaurantList.push({restaurant:newRestaurant,
+                                          marker:marker});
             }
         }
-        console.log(bounds);
         if(bounds){
             google.maps.event.addDomListener(window, 'resize', function() {
-            map.fitBounds(bounds); 
+            map.fitBounds(bounds);
             });
         }
 
@@ -346,7 +336,6 @@ function viewModel(){
             title: r.name,
             animation: google.maps.Animation.DROP,
           });
-            console.log('true');
             bounds.extend(marker.getPosition());
 
 
