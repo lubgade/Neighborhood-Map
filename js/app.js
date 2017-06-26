@@ -5,21 +5,22 @@ function viewModel(){
     var self = this;
     var place = '';
     var total;
+    var place_id;
 
     var largeInfowindow = new google.maps.InfoWindow({maxwidth: 300});
-    var cors_anywhere_url = 'https://cors-anywhere.herokuapp.com/';
-    var bounds = new google.maps.LatLngBounds();
+    var corsAnywhereUrl = 'https://cors-anywhere.herokuapp.com/';
+    //var cors_anywhere_url = 'http://localhost:8080/';
     var b = new google.maps.LatLngBounds();
     var z;
 
     // Create a new blank array for all the listing markers.
     this.showDiv = ko.observable(false);
     this.searchLocation = ko.observable('New York,NY,USA');
-    this.status = ko.observable('');
     this.filterLocation = ko.observable('');
     this.restaurantList = ko.observableArray([]);
     this.results_found = ko.observable();
     this.pageNumber = ko.observable(0);
+    this.visibleDiv = ko.observable(true);
 
 
     //restaurant object with all its info
@@ -39,45 +40,41 @@ function viewModel(){
         }
     };
 
-        var input = document.getElementById('input_text');
-        var options = {
-            types: ['(cities)'],
-            componentRestrictions: {country: 'us'}
-            };
-        console.log('autocomplete');
-        //set autocomplete for city
-        newLocation = new google.maps.places.Autocomplete(input,options);
+    var input = document.getElementById('input_text');
+    var options = {
+        types: ['(cities)'],
+        componentRestrictions: {country: 'us'}
+    };
+    console.log('autocomplete');
+    //set autocomplete for city
+    newLocation = new google.maps.places.Autocomplete(input,options);
 
-        //listener for city change
-        newLocation.addListener('place_changed', function(){
-                console.log('place changed');
-                place = newLocation.getPlace();
-                console.log(place);
-                self.searchLocation(place.formatted_address);
-                console.log(self.searchLocation());
-                self.results_found(0);
-                self.pageNumber(0);
-                hideMarkers();
-                self.showDiv(false);
-                self.restaurantList.removeAll();
-                self.processSearchLocation();
-                });
+    //listener for city change
+    newLocation.addListener('place_changed', function(){
+        console.log('place changed');
+        place = newLocation.getPlace();
+        console.log(place);
+        self.searchLocation(place.formatted_address);
+        console.log(self.searchLocation());
+        self.results_found(0);
+        self.pageNumber(0);
+        hideMarkers();
+        self.showDiv(false);
+        self.restaurantList.removeAll();
+        self.processSearchLocation();
+    });
 
-        //mobile view
-        var menu = document.querySelector('#menu');
-        var drawer = document.querySelector('.nav');
-        menu.addEventListener('click',function(e){
-            drawer.classList.toggle('open');
-            e.stopPropagation();
-        });
-    //}; //end of initialize
+
+    //mobile view
+    this.toggleResults = function(){
+        self.visibleDiv(!self.visibleDiv());
+    }
 
 
     // Takes in the selected city to find it's location & further retrieve
     // Zomato place_id
     this.processSearchLocation = function(){
         self.restaurantList.removeAll();
-        self.status('Loading....');
         self.showDiv(true);
         var geocoder = new google.maps.Geocoder();
         var place_name = self.searchLocation();
@@ -93,6 +90,9 @@ function viewModel(){
             }, function(results, status){
                 console.log(results);
                 if(status == google.maps.GeocoderStatus.OK){
+                    bounds = new google.maps.LatLngBounds();
+                    placeBounds = results[0].geometry.bounds;
+                    bounds = placeBounds;
                     var newLat = results[0].geometry.location.lat();
                     console.log(newLat);
                     var newLng = results[0].geometry.location.lng();
@@ -122,16 +122,17 @@ function viewModel(){
                         "cities?q=";
         $.ajax({
             type: 'GET',
-            url: cors_anywhere_url + zomatoUrl + place_name +
+            url: corsAnywhereUrl + zomatoUrl + place_name +
                  "&lat=" + newLat + "&lon=" + newLng + "&count=1",
             headers: {'user_key': '26ce1af09de13709ce7601f27ae5e14d'},
             }).done(function(response){
                 console.log(response);
                 if(response.location_suggestions.length > 0){
-                    var id = response.location_suggestions[0].id;
-                    var place_id = id;
+                        var id = response.location_suggestions[0].id;
+                        place_id = id;
                 }
                 else{
+
                     window.alert("Sorry Zomato cannot find the place_id");
                     return;
                 }
@@ -150,12 +151,11 @@ function viewModel(){
                         place_id + "&entity_type=city&cuisines=148";
         $.ajax({
             type: 'GET',
-            url: cors_anywhere_url + zomatoUrl,
+            url: corsAnywhereUrl + zomatoUrl,
             headers: {'user_key': '26ce1af09de13709ce7601f27ae5e14d'},
             }).done(function(response){
                 console.log(response);
                 self.results_found(response.results_found);
-                self.status('Loading...');
                 showRestaurants(response);
                 b = map.getBounds();
                 z = map.getZoom();
@@ -294,7 +294,7 @@ function viewModel(){
                         start + "&cuisines=148";
         $.ajax({
             type: 'GET',
-            url: cors_anywhere_url + zomatoUrl,
+            url: corsAnywhereUrl + zomatoUrl,
             headers: {'user_key': '26ce1af09de13709ce7601f27ae5e14d'},
             }).done(function(response){
                 showRestaurants(response);
@@ -307,22 +307,23 @@ function viewModel(){
     //Store the retrieved results for that page for creating a list view & show
     //them on the map
     function showRestaurants(data){
-        total = data.results_found;
-                if(total > 100){
-                    total = 100;
-                }
-                self.status(total + ' results found...');
-                if(total === 0){
-                    self.status('Sorry no results');
-                }
-
+        bounds = new google.maps.LatLngBounds();
+        bounds = placeBounds;
         for(var i=0;i<data.results_shown;i++){
             var r = data.restaurants[i].restaurant;
             var marker = createMarker(r);
-            var newRestaurant = new restaurant(r);
-            self.restaurantList.push({restaurant:newRestaurant,marker:marker});
+            if(marker){
+                var newRestaurant = new restaurant(r);
+                self.restaurantList.push({restaurant:newRestaurant,marker:marker});
+            }
         }
-       // map.fitBounds(bounds);
+        console.log(bounds);
+        if(bounds){
+            google.maps.event.addDomListener(window, 'resize', function() {
+            map.fitBounds(bounds); 
+            });
+        }
+
         b = map.getBounds();
         z = map.getZoom();
     } //end of showRestaurants
@@ -337,14 +338,17 @@ function viewModel(){
         lat = parseFloat(r.location.latitude);
         lng = parseFloat(r.location.longitude);
         position = new google.maps.LatLng(lat, lng);
+        /*if(placeBounds.contains(position))
+        {*/
         var marker = new google.maps.Marker({
             map: map,
             position: position,
             title: r.name,
             animation: google.maps.Animation.DROP,
           });
+            console.log('true');
+            bounds.extend(marker.getPosition());
 
-        //bounds.extend(marker.position);
 
         var contentString = '<div id="info_window">' +
                              '<img src=' + r.thumb + ' >' +
@@ -364,6 +368,7 @@ function viewModel(){
             populateInfoWindow(this, largeInfowindow, contentString);
           });
           return newMarker;
+          //}
     } // end of createMarker
 
 
@@ -409,6 +414,9 @@ function initMap(){
         zoomControl: true
         });
         var newLocation;
+        var placeBounds = new google.maps.LatLngBounds();
+        var bounds;
+
         ko.applyBindings(new viewModel());
     }
 
