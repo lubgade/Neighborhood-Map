@@ -11,7 +11,7 @@
 </head>
 <body>
 <div id="map"></div>
-<a id="menu" class="header__menu">
+<a id="menu" class="header__menu" data-bind="click: toggleResults">
     <img src="images/mobile.svg" alt="mobile">
 </a>
 
@@ -32,9 +32,7 @@
     </form>
 </div>
 
-
-
-<nav id="drawer" class="nav">
+<nav id="drawer" class="nav" data-bind="if: visibleDiv()">
 <div class="display_div" data-bind="visible: showDiv">
     <div data-bind="visible: filteredList">
         <h3 class="status">Results found:
