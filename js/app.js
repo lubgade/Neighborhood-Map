@@ -67,7 +67,7 @@ function viewModel(){
     //mobile view
     this.toggleResults = function(){
         self.visibleDiv(!self.visibleDiv());
-    }
+    };
 
 
     // Takes in the selected city to find it's location & further retrieve
