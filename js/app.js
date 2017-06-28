@@ -372,6 +372,8 @@ function viewModel(){
 
           // Create an onclick event to open an infowindow at each marker.
           marker.addListener('click', function() {
+            hideAnimation();
+            marker.setAnimation(google.maps.Animation.BOUNCE);
             populateInfoWindow(this, largeInfowindow, contentString);
           });
           return newMarker;
