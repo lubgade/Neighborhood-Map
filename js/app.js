@@ -163,9 +163,12 @@ function viewModel(){
     this.filteredList = ko.computed(function(){
         var filter = self.filterLocation().toLowerCase();
         if(self.filterLocation()){
+           //centerMap();
+           //showMarkers();
            return ko.utils.arrayFilter(self.restaurantList(),
            function(restaurant){
            if(restaurant.restaurant.name.toLowerCase().indexOf(filter) !== -1){
+               restaurant.marker.marker.setVisible(true);
                return true;
            }
            else{
@@ -175,23 +178,32 @@ function viewModel(){
            });
         }
         else{
-
+            showMarkers();
             return self.restaurantList.slice(0);
         }
     }, this);
 
 
+    //Hide animation set for chosen marker
+    function hideAnimation(){
+        var l = self.restaurantList().length;
+        for(var i=0;i<l;i++){
+            self.restaurantList()[i].marker.marker.setAnimation(null);
+        }
+    }
+
 
     //Go to a particular marker & open the infowindow when a restaurant is
     //clicked on the list view
     this.goToMarker = function(clickedRestaurant){
+        hideAnimation();
         var name = clickedRestaurant.restaurant.name;
         var address = clickedRestaurant.restaurant.address;
         showMarker(name,address);
     };
 
 
-    //Find the marker from the markers array to open the marker
+    //Find the marker from the restaurant list to open the marker
     function showMarker(name,address){
         var l = self.restaurantList().length;
         for(var i=0;i<l;i++){
@@ -220,17 +232,23 @@ function viewModel(){
     }
 
 
+    //show all markers on the current page
+    function showMarkers(){
+        for(var i=0;i<self.restaurantList().length;i++){
+            var m = self.restaurantList()[i].marker.marker;
+            m.setAnimation(null);
+            m.setVisible(true);
+        }
+    }
+
+
     //clear filter field & show all restaurants on that page by centering the
     //map
     this.clearFilter = function(){
         largeInfowindow.close();
         centerMap();
         self.filterLocation('');
-        for(var i=0;i<self.restaurantList().length;i++){
-            var m = self.restaurantList()[i].marker.marker;
-            m.setAnimation(null);
-            m.setVisible(true);
-        }
+        showMarkers();
     };
 
 
